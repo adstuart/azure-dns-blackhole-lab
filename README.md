@@ -18,17 +18,10 @@ Tested in Sweden Central, April 2026.
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    VM[Test VM] -->|DNS| INB[Resolver Inbound Endpoint]
-    INB --> RULE{Forwarding Ruleset}
-    RULE -->|"microsoft.com, login.microsoftonline.com<br/>(Azure-internal bypass)"| AZDNS[Azure DNS<br/>168.63.129.16]
-    RULE -->|"everything else (wildcard '.')"| BH[Blackhole forwarders<br/>unreachable RFC1918 IPs]
-    BH -.x.-> NX[No response → SERVFAIL]
-    AZFW[Azure Firewall Premium] -.control-plane.-> MGMT[AFW management plane]
-    style BH fill:#fdd,stroke:#c33
-    style AZDNS fill:#dfd,stroke:#393
-```
+![Architecture](docs/architecture.png)
+
+Source: [`docs/architecture.drawio`](docs/architecture.drawio) (open with
+[draw.io](https://app.diagrams.net/) to edit).
 
 ## Topology
 
