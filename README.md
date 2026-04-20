@@ -8,10 +8,10 @@ Short answer:
 
 1. The blackhole works for workload VMs — public names like `example.com` fail to resolve.
 2. **Microsoft-owned domains (`microsoft.com`, `login.microsoftonline.com`, …) still resolve.**
-   Azure DNS Private Resolver does not permit forwarding rules for a reserved set of
-   Microsoft-owned domains — queries for those names always use Azure's default
-   resolution regardless of the ruleset. See
-   [*Restrictions* in the Private Resolver overview](https://learn.microsoft.com/en-us/azure/dns/private-resolver-overview#restrictions).
+   Certain two-label DNS names reserved for Azure services (e.g. `windows.net`, `azure.com`,
+   `azure.net`) are ignored by a wildcard forwarding rule and fall through to normal
+   Azure DNS resolution. See
+   [Private Resolver endpoints and rulesets — Rule processing](https://learn.microsoft.com/en-us/azure/dns/private-resolver-endpoints-rulesets#rule-processing).
 3. **Azure Firewall Premium deployed successfully** despite the wildcard blackhole.
    The control-plane provisioning path does not appear to depend on the data-plane DNS
    path that the wildcard rule breaks.
@@ -76,20 +76,18 @@ need to be triggered.
 
 ## Why the Microsoft bypass exists
 
-Azure DNS Private Resolver does not allow forwarding rules for a set of Microsoft-owned
-domains — queries for those names always use Azure's default resolution regardless of any
-ruleset (including a wildcard `.` rule).
+Azure's doc for Private Resolver forwarding rules states directly:
 
-Documented under *Restrictions* in the Private Resolver overview:
+> *"Certain domains are ignored when using a wildcard rule for DNS resolution, because
+> they're reserved for Azure services. … The two-label DNS names listed in this article
+> (for example: windows.net, azure.com, azure.net, windowsazure.us) are reserved for
+> Azure services."*
 
-> *"Some domain names are reserved for Microsoft use and DNS forwarding rule sets for
-> these domains aren't allowed."*
+— [Private Resolver endpoints and rulesets — Rule processing](https://learn.microsoft.com/en-us/azure/dns/private-resolver-endpoints-rulesets#rule-processing)
 
-— [Azure DNS Private Resolver overview — Restrictions](https://learn.microsoft.com/en-us/azure/dns/private-resolver-overview#restrictions)
-
-The currently-reserved list is published in the same doc. That list is why
-`microsoft.com` and `login.microsoftonline.com` continue to resolve in this lab while
-`example.com` does not.
+That linked *Azure services DNS zone configuration* page enumerates the full list. That
+mechanism is why `microsoft.com` and `login.microsoftonline.com` continue to resolve in
+this lab while `example.com` does not.
 
 ## Notes
 
