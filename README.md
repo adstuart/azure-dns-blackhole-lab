@@ -94,8 +94,8 @@ this lab while `example.com` does not.
 
 ## Notes
 
-- Run in Sweden Central; should behave identically in any region that supports DNS
-  Private Resolver + Azure Firewall Premium.
+- Only tested in Sweden Central. Behaviour is expected to be identical in any region
+  that supports DNS Private Resolver + Azure Firewall Premium, but not verified.
 - VNet DNS change propagates ~60s; the VM test sleeps briefly after linking before
   running resolution checks.
 - Azure Firewall Premium create + provisioning typically takes 15–30 minutes.
