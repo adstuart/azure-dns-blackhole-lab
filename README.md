@@ -8,8 +8,10 @@ Short answer:
 
 1. The blackhole works for workload VMs — public names like `example.com` fail to resolve.
 2. **Microsoft-owned domains (`microsoft.com`, `login.microsoftonline.com`, …) still resolve.**
-   This is Azure's built-in exception — the resolver short-circuits Microsoft zones
-   before the wildcard forwarding rule applies.
+   Azure DNS Private Resolver does not permit forwarding rules for a reserved set of
+   Microsoft-owned domains — queries for those names always use Azure's default
+   resolution regardless of the ruleset. See
+   [*Restrictions* in the Private Resolver overview](https://learn.microsoft.com/en-us/azure/dns/private-resolver-overview#restrictions).
 3. **Azure Firewall Premium deployed successfully** despite the wildcard blackhole.
    The control-plane provisioning path does not appear to depend on the data-plane DNS
    path that the wildcard rule breaks.
@@ -74,38 +76,20 @@ need to be triggered.
 
 ## Why the Microsoft bypass exists
 
-Azure DNS Private Resolver, like Azure-provided DNS (168.63.129.16), short-circuits a set
-of Microsoft-owned zones *before* evaluating user-defined forwarding rules. This is so
-managed services in the VNet (Backup, Monitor, ARM endpoints, firewall management, AAD
-auth, etc.) don't break when a customer applies a hardened outbound DNS policy.
+Azure DNS Private Resolver does not allow forwarding rules for a set of Microsoft-owned
+domains — queries for those names always use Azure's default resolution regardless of any
+ruleset (including a wildcard `.` rule).
 
-If you need to explicitly prove the bypass list, compare resolution of a random
-non-Microsoft name (fails) against a Microsoft name (succeeds) while the wildcard rule is
-active — exactly what this lab does.
+Documented under *Restrictions* in the Private Resolver overview:
 
-## Takeaways
+> *"Some domain names are reserved for Microsoft use and DNS forwarding rule sets for
+> these domains aren't allowed."*
 
-- A catch-all `.` wildcard forwarder is a viable **egress DNS chokepoint** for non-Microsoft
-  traffic. Normal outbound name resolution dies; Microsoft-managed services keep working.
-- **Don't rely on "Firewall won't deploy under broken DNS" as a guardrail.** It deploys fine.
-- If you want a *true* blackhole (including Microsoft domains) you'd need to enumerate the
-  Microsoft zones with explicit higher-priority forwarding rules to the same unreachable
-  targets — but this will break a lot of Azure plumbing and is rarely what you want.
+— [Azure DNS Private Resolver overview — Restrictions](https://learn.microsoft.com/en-us/azure/dns/private-resolver-overview#restrictions)
 
-## Repro
-
-Scripted end-to-end in [`lab/run.sh`](lab/run.sh).
-
-Prerequisites: `az` logged in, a subscription with quota for 1× VM + 1× AFW Premium in
-your chosen region.
-
-```bash
-./lab/run.sh
-```
-
-The script creates a fresh RG, deploys everything, runs the DNS test on the VM, deploys
-the firewall, and writes timestamped artifacts to `lab/out/run-*/`. Tear down with
-`az group delete -n <rg> --yes --no-wait`.
+The currently-reserved list is published in the same doc. That list is why
+`microsoft.com` and `login.microsoftonline.com` continue to resolve in this lab while
+`example.com` does not.
 
 ## Notes
 
@@ -114,7 +98,3 @@ the firewall, and writes timestamped artifacts to `lab/out/run-*/`. Tear down wi
 - VNet DNS change propagates ~60s; the VM test sleeps briefly after linking before
   running resolution checks.
 - Azure Firewall Premium create + provisioning typically takes 15–30 minutes.
-
-## Status
-
-PoC / one-shot lab. No ongoing maintenance.
