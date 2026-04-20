@@ -12,6 +12,9 @@ Short answer:
    `azure.net`) are ignored by a wildcard forwarding rule and fall through to normal
    Azure DNS resolution. See
    [Private Resolver endpoints and rulesets — Rule processing](https://learn.microsoft.com/en-us/azure/dns/private-resolver-endpoints-rulesets#rule-processing).
+
+   > [!NOTE]
+   > *Certain domains are ignored when using a wildcard rule for DNS resolution, because they're reserved for Azure services. See Azure services DNS zone configuration for a list of domains that are reserved. The two-label DNS names listed in this article (for example: windows.net, azure.com, azure.net, windowsazure.us) are reserved for Azure services.*
 3. **Azure Firewall Premium deployed successfully** despite the wildcard blackhole.
    The control-plane provisioning path does not appear to depend on the data-plane DNS
    path that the wildcard rule breaks.
